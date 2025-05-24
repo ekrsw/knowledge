@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime, date
 from typing import List, Optional
-from models import StatusEnum
+from models import StatusEnum, ChangeTypeEnum
 
 # User関連のスキーマ
 class UserBase(BaseModel):
@@ -19,6 +19,39 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+# Article関連のスキーマ
+class ArticleBase(BaseModel):
+    article_number: str
+    title: str
+    content: Optional[str] = None
+
+class ArticleCreate(ArticleBase):
+    article_uuid: str
+
+class ArticleImport(BaseModel):
+    article_uuid: str
+    article_number: str
+    title: str
+    content: Optional[str] = None
+
+class Article(ArticleBase):
+    article_uuid: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class ArticleSearch(BaseModel):
+    article_uuid: str
+    article_number: str
+    title: str
+    is_active: bool
+
+class ArticleURL(BaseModel):
+    url: str
+
 # Knowledge関連のスキーマ
 class KnowledgeBase(BaseModel):
     title: str
@@ -33,8 +66,16 @@ class KnowledgeBase(BaseModel):
     add_comments: Optional[str] = None
     remarks: Optional[str] = None
 
+    @field_validator('open_publish_start', 'open_publish_end', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
+
 class KnowledgeCreate(KnowledgeBase):
-    pass
+    article_number: str
+    change_type: ChangeTypeEnum
 
 class KnowledgeUpdate(BaseModel):
     title: Optional[str] = None
@@ -49,17 +90,29 @@ class KnowledgeUpdate(BaseModel):
     add_comments: Optional[str] = None
     remarks: Optional[str] = None
 
+    @field_validator('open_publish_start', 'open_publish_end', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
+
 class StatusUpdate(BaseModel):
     status: StatusEnum
 
 class Knowledge(KnowledgeBase):
     id: int
+    article_number: str
+    change_type: ChangeTypeEnum
     status: StatusEnum
     created_by: int
     submitted_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None  # 承認日時
+    approved_by: Optional[int] = None  # 承認者ID
     created_at: datetime
     updated_at: datetime
     author: User
+    approver: Optional[User] = None  # 承認者情報
     
     class Config:
         from_attributes = True

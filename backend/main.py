@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Form
+from fastapi import FastAPI, Depends, HTTPException, status, Form, File, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import List
@@ -9,12 +9,12 @@ import schemas
 import crud
 from database import SessionLocal, engine, get_db
 from auth import create_access_token, verify_token, ACCESS_TOKEN_EXPIRE_MINUTES
-from models import StatusEnum
+from models import StatusEnum, ChangeTypeEnum
 
 # データベーステーブルを作成
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="ナレッジ投稿システム", version="1.0.0")
+app = FastAPI(title="ナレッジ投稿システム", version="2.0.0")
 
 # セキュリティ設定
 security = HTTPBearer()
@@ -91,11 +91,85 @@ def read_users_me(current_user: models.User = Depends(get_current_user)):
     """現在のユーザー情報を取得"""
     return current_user
 
+# Article関連のエンドポイント
+@app.post("/articles/import", status_code=status.HTTP_201_CREATED)
+def import_articles(file: UploadFile = File(...), admin_user: models.User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    """CSVファイルから記事を一括インポート（管理者のみ）"""
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="CSVファイルのみアップロード可能です")
+    
+    try:
+        csv_content = file.file.read().decode('utf-8')
+        result = crud.import_articles_from_csv(db, csv_content)
+        return {
+            "message": f"{result['success']}件の記事をインポートしました",
+            "success_count": result['success'],
+            "errors": result['errors'],
+            "duplicates": result['duplicates']
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"インポートエラー: {str(e)}")
+
+@app.get("/articles/", response_model=List[schemas.Article])
+def read_articles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """記事一覧を取得"""
+    articles = crud.get_articles(db, skip=skip, limit=limit)
+    return articles
+
+@app.get("/articles/search", response_model=List[schemas.ArticleSearch])
+def search_articles(q: str, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """記事番号またはタイトルで記事を検索"""
+    if not q.strip():
+        raise HTTPException(status_code=400, detail="検索クエリが必要です")
+    
+    articles = crud.search_articles(db, query=q, skip=skip, limit=limit)
+    return articles
+
+@app.get("/articles/{article_number}", response_model=schemas.Article)
+def read_article_by_number(article_number: str, db: Session = Depends(get_db)):
+    """記事番号で特定の記事を取得"""
+    article = crud.get_article_by_number(db, article_number=article_number)
+    if article is None:
+        raise HTTPException(status_code=404, detail="記事が見つかりません")
+    return article
+
+@app.get("/articles/uuid/{article_uuid}", response_model=schemas.Article)
+def read_article_by_uuid(article_uuid: str, db: Session = Depends(get_db)):
+    """UUIDで特定の記事を取得"""
+    article = crud.get_article_by_uuid(db, article_uuid=article_uuid)
+    if article is None:
+        raise HTTPException(status_code=404, detail="記事が見つかりません")
+    return article
+
+@app.get("/articles/uuid/{article_uuid}/url", response_model=schemas.ArticleURL)
+def get_article_url(article_uuid: str, db: Session = Depends(get_db)):
+    """記事の外部システムURLを生成"""
+    article = crud.get_article_by_uuid(db, article_uuid=article_uuid)
+    if article is None:
+        raise HTTPException(status_code=404, detail="記事が見つかりません")
+    
+    url = crud.generate_article_url(article_uuid)
+    return {"url": url}
+
+@app.get("/articles/{article_number}/proposals", response_model=List[schemas.Knowledge])
+def read_article_proposals(article_number: str, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """特定記事に対する修正・削除案一覧を取得"""
+    # 記事の存在確認
+    article = crud.get_article_by_number(db, article_number=article_number)
+    if article is None:
+        raise HTTPException(status_code=404, detail="記事が見つかりません")
+    
+    proposals = crud.get_knowledge_by_article(db, article_number=article_number, skip=skip, limit=limit)
+    return proposals
+
 # ナレッジ関連のエンドポイント
 @app.post("/knowledge/", response_model=schemas.Knowledge, status_code=status.HTTP_201_CREATED)
 def create_knowledge(knowledge: schemas.KnowledgeCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """新しいナレッジを作成"""
-    return crud.create_knowledge(db=db, knowledge=knowledge, user_id=current_user.id)
+    """新しいナレッジ（修正・削除案）を作成"""
+    db_knowledge = crud.create_knowledge(db=db, knowledge=knowledge, user_id=current_user.id)
+    if db_knowledge is None:
+        raise HTTPException(status_code=404, detail="指定された記事番号が見つかりません")
+    return db_knowledge
 
 @app.get("/knowledge/", response_model=List[schemas.Knowledge])
 def read_knowledge_list(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
