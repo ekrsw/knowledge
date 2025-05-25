@@ -156,3 +156,16 @@ class FileProcessingError(KnowledgeBaseException):
         message = f"ファイル '{filename}' の処理中にエラーが発生しました: {reason}"
         details = {"filename": filename, "reason": reason}
         super().__init__(message=message, details=details, error_code="FILE_PROCESSING_ERROR")
+
+
+class InvalidKnowledgeStatusError(ValidationError):
+    """ナレッジのステータスが無効なエラー"""
+    
+    def __init__(self, knowledge_id: int, current_status: str, required_status: str):
+        message = f"ナレッジID '{knowledge_id}' のステータスが '{current_status}' です。'{required_status}' である必要があります"
+        details = {
+            "knowledge_id": knowledge_id,
+            "current_status": current_status,
+            "required_status": required_status
+        }
+        super().__init__(message=message, details=details, error_code="INVALID_KNOWLEDGE_STATUS")

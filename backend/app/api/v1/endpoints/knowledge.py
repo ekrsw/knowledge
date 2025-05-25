@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from app.api.deps import get_current_user, get_admin_user
 from app.core.logging import get_request_logger
-from app.core.exceptions import KnowledgeNotFoundError, ArticleNotFoundError
+from app.core.exceptions import KnowledgeNotFoundError, ArticleNotFoundError, InvalidKnowledgeStatusError
 from app.db.session import get_async_session
 from app.models import User, StatusEnum
 from app.schemas import Knowledge, KnowledgeCreate, KnowledgeUpdate, StatusUpdate
@@ -208,6 +208,117 @@ async def update_knowledge_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="ナレッジステータスの更新中にエラーが発生しました"
+        )
+
+
+@router.post("/{knowledge_id}/submit", response_model=Knowledge)
+async def submit_knowledge(
+    request: Request,
+    knowledge_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """ナレッジを提出（ステータスをsubmittedに変更）"""
+    logger = get_request_logger(request)
+    logger.info(f"ナレッジ提出リクエスト: knowledge_id={knowledge_id}, user_id={current_user.id}")
+    
+    try:
+        # ナレッジの存在チェック
+        knowledge = await knowledge_crud.get(db, id=knowledge_id)
+        if not knowledge:
+            logger.warning(f"ナレッジが見つかりません: knowledge_id={knowledge_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ナレッジが見つかりません"
+            )
+        
+        # ステータス更新（submitted）
+        try:
+            updated_knowledge = await knowledge_crud.update_status(
+                db, db_obj=knowledge, new_status=StatusEnum.submitted, user=current_user
+            )
+            
+            logger.info(f"ナレッジ提出成功: knowledge_id={knowledge_id}")
+            return updated_knowledge
+            
+        except KnowledgeNotFoundError:
+            logger.warning(f"ナレッジ提出権限なし: knowledge_id={knowledge_id}, user_id={current_user.id}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="このナレッジを提出する権限がありません"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"ナレッジ提出エラー: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="ナレッジの提出中にエラーが発生しました"
+        )
+
+
+
+
+@router.post("/{knowledge_id}/approve", response_model=Knowledge)
+async def approve_knowledge(
+    request: Request,
+    knowledge_id: int,
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """ナレッジを承認（ステータスをapprovedに変更）"""
+    logger = get_request_logger(request)
+    logger.info(f"ナレッジ承認リクエスト: knowledge_id={knowledge_id}, user_id={current_user.id}")
+    
+    try:
+        # ナレッジの存在チェック
+        knowledge = await knowledge_crud.get(db, id=knowledge_id)
+        if not knowledge:
+            logger.warning(f"ナレッジが見つかりません: knowledge_id={knowledge_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ナレッジが見つかりません"
+            )
+        
+        # ステータスチェック（submittedである必要がある）
+        if knowledge.status != StatusEnum.submitted:
+            logger.warning(f"ナレッジのステータスが無効: knowledge_id={knowledge_id}, current_status={knowledge.status.value}")
+            raise InvalidKnowledgeStatusError(
+                knowledge_id=knowledge_id,
+                current_status=knowledge.status.value,
+                required_status=StatusEnum.submitted.value
+            )
+        
+        # ステータス更新（approved）
+        try:
+            updated_knowledge = await knowledge_crud.update_status(
+                db, db_obj=knowledge, new_status=StatusEnum.approved, user=current_user
+            )
+            
+            logger.info(f"ナレッジ承認成功: knowledge_id={knowledge_id}")
+            return updated_knowledge
+            
+        except KnowledgeNotFoundError:
+            logger.warning(f"ナレッジ承認権限なし: knowledge_id={knowledge_id}, user_id={current_user.id}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="このナレッジを承認する権限がありません"
+            )
+        
+    except InvalidKnowledgeStatusError as e:
+        logger.warning(f"ナレッジステータスエラー: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"ナレッジ承認エラー: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="ナレッジの承認中にエラーが発生しました"
         )
 
 

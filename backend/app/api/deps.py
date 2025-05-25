@@ -6,7 +6,7 @@ from typing import AsyncGenerator
 from app.core.exceptions import InvalidTokenError, UserNotFoundError
 from app.db.session import get_async_session
 from app.models import User
-from app.auth import verify_token
+from app.auth import verify_token_with_blacklist
 from app.crud.user import user_crud
 
 # セキュリティ設定
@@ -17,11 +17,15 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_async_session)
 ) -> User:
-    """現在のユーザーを取得する依存性"""
+    """現在のユーザーを取得する依存性（ブラックリストチェック付き）"""
     token = credentials.credentials
     
     try:
-        username = verify_token(token)
+        payload = await verify_token_with_blacklist(token, db)
+        if payload is None:
+            raise InvalidTokenError()
+        
+        username = payload.get("sub")
         if username is None:
             raise InvalidTokenError()
     except Exception:
