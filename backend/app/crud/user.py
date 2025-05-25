@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
+from uuid import UUID
 
 from app.core.exceptions import UserNotFoundError, DuplicateUsernameError
 from app.models import User
@@ -11,7 +12,7 @@ from app.auth import get_password_hash, verify_password
 class UserCRUD:
     """ユーザー関連のCRUD操作"""
     
-    async def get(self, db: AsyncSession, id: int) -> Optional[User]:
+    async def get(self, db: AsyncSession, id: UUID) -> Optional[User]:
         """IDでユーザーを取得"""
         result = await db.execute(select(User).where(User.id == id))
         return result.scalar_one_or_none()
@@ -60,7 +61,7 @@ class UserCRUD:
         await db.refresh(db_obj)
         return db_obj
     
-    async def delete(self, db: AsyncSession, id: int) -> bool:
+    async def delete(self, db: AsyncSession, id: UUID) -> bool:
         """ユーザーを削除"""
         db_obj = await self.get(db, id)
         if not db_obj:

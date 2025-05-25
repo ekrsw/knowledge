@@ -23,7 +23,6 @@ class ChangeTypeEnum(enum.Enum):
 class Knowledge(Base):
     __tablename__ = "knowledge"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
     article_number: Mapped[str] = mapped_column(String(20), index=True)  # 対象記事番号
     change_type: Mapped[ChangeTypeEnum] = mapped_column(Enum(ChangeTypeEnum))  # 修正案 or 削除案
     title: Mapped[str] = mapped_column(String(200))
@@ -42,8 +41,6 @@ class Knowledge(Base):
     submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))  # 承認日時
     approved_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))  # 承認者ID
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # リレーションシップ
     author: Mapped["User"] = relationship(

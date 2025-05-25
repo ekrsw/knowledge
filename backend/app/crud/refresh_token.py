@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
@@ -14,7 +15,7 @@ class RefreshTokenCRUD:
         self, 
         db: AsyncSession, 
         token: str, 
-        user_id: int, 
+        user_id: UUID, 
         expires_at: datetime
     ) -> RefreshToken:
         """リフレッシュトークンを作成"""
@@ -51,7 +52,7 @@ class RefreshTokenCRUD:
         await db.commit()
         return result.rowcount
     
-    async def delete_user_tokens(self, db: AsyncSession, user_id: int) -> int:
+    async def delete_user_tokens(self, db: AsyncSession, user_id: UUID) -> int:
         """特定ユーザーのすべてのリフレッシュトークンを削除"""
         result = await db.execute(
             delete(RefreshToken).where(RefreshToken.user_id == user_id)

@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # データベース設定
     DATABASE_URL: str = "sqlite+aiosqlite:///./knowledge.db"
     SQLALCHEMY_ECHO: bool = True
+    TZ: str = "Asia/Tokyo"
 
     # セキュリティ設定
     SECRET_KEY: str = "your-secret-key-change-in-production"

@@ -3,6 +3,7 @@ from sqlalchemy import select, desc, and_
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import datetime
+from uuid import UUID
 
 from app.core.exceptions import KnowledgeNotFoundError, ArticleNotFoundError
 from app.models import Knowledge, StatusEnum, ChangeTypeEnum, User
@@ -12,7 +13,7 @@ from app.schemas import KnowledgeCreate, KnowledgeUpdate
 class KnowledgeCRUD:
     """ナレッジ関連のCRUD操作"""
     
-    async def get(self, db: AsyncSession, id: int) -> Optional[Knowledge]:
+    async def get(self, db: AsyncSession, id: UUID) -> Optional[Knowledge]:
         """IDでナレッジを取得"""
         result = await db.execute(
             select(Knowledge)
@@ -58,7 +59,7 @@ class KnowledgeCRUD:
     async def get_by_user(
         self, 
         db: AsyncSession, 
-        user_id: int, 
+        user_id: UUID, 
         skip: int = 0, 
         limit: int = 100
     ) -> List[Knowledge]:
@@ -95,7 +96,7 @@ class KnowledgeCRUD:
         self, 
         db: AsyncSession, 
         obj_in: KnowledgeCreate, 
-        user_id: int
+        user_id: UUID
     ) -> Knowledge:
         """新しいナレッジを作成"""
         # 記事番号の存在チェックは呼び出し元で行う
@@ -185,7 +186,7 @@ class KnowledgeCRUD:
         # 関連データを含めて再取得
         return await self.get(db, db_obj.id)
     
-    async def delete(self, db: AsyncSession, id: int, user_id: int) -> bool:
+    async def delete(self, db: AsyncSession, id: UUID, user_id: UUID) -> bool:
         """ナレッジを削除（作成者のみ）"""
         result = await db.execute(
             select(Knowledge).where(

@@ -1,9 +1,11 @@
 from sqlalchemy import String, Text, DateTime, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 from sqlalchemy.sql import func
 from typing import Optional
 
-from app.db.base import Base
+
+class Base(DeclarativeBase):
+    pass
 
 
 class Article(Base):

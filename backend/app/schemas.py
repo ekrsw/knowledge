@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime, date
 from typing import List, Optional
+from uuid import UUID
 from app.models import StatusEnum, ChangeTypeEnum
 
 # User関連のスキーマ
@@ -24,7 +25,7 @@ class UserUpdate(BaseModel):
     is_admin: Optional[bool] = None
 
 class User(UserBase):
-    id: int
+    id: UUID
     is_admin: bool
     
     class Config:
@@ -112,14 +113,14 @@ class StatusUpdate(BaseModel):
     status: StatusEnum
 
 class Knowledge(KnowledgeBase):
-    id: int
+    id: UUID
     article_number: str
     change_type: ChangeTypeEnum
     status: StatusEnum
-    created_by: int
+    created_by: UUID
     submitted_at: Optional[datetime] = None
     approved_at: Optional[datetime] = None  # 承認日時
-    approved_by: Optional[int] = None  # 承認者ID
+    approved_by: Optional[UUID] = None  # 承認者ID
     created_at: datetime
     updated_at: datetime
     author: User
