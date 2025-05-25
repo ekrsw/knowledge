@@ -1,4 +1,5 @@
 # Python関連
+_venv/
 venv/
 microservice_test/
 __pycache__/
