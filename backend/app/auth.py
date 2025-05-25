@@ -2,14 +2,18 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.models import User
 
 # パスワードハッシュ化の設定
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# JWT設定
-SECRET_KEY = "your-secret-key-here"  # 本番環境では環境変数から取得
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# JWT設定（設定ファイルから取得）
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """プレーンパスワードとハッシュ化されたパスワードを検証"""
@@ -40,3 +44,8 @@ def verify_token(token: str) -> Optional[str]:
         return username
     except JWTError:
         return None
+
+async def authenticate_user(db: AsyncSession, username: str, password: str) -> Optional[User]:
+    """ユーザー認証（非同期版）"""
+    from app.crud.user import user_crud
+    return await user_crud.authenticate(db, username, password)

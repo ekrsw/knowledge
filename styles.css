@@ -1,0 +1,250 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "MS UI Gothic", "Meiryo UI", sans-serif;
+    font-size: 12px;
+    background-color: #c0c0c0;
+    padding: 20px;
+}
+
+.window {
+    background-color: #c0c0c0;
+    border: 2px outset #c0c0c0;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.title-bar {
+    background: linear-gradient(to bottom, #0078d4, #106ebe);
+    color: white;
+    padding: 4px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.title-bar-controls {
+    display: flex;
+    gap: 2px;
+}
+
+.title-bar-controls button {
+    background: #c0c0c0;
+    border: 1px outset #c0c0c0;
+    width: 16px;
+    height: 14px;
+    font-size: 10px;
+    cursor: pointer;
+    color: black;
+}
+
+.title-bar-controls button:active {
+    border: 1px inset #c0c0c0;
+}
+
+.window-body {
+    padding: 8px;
+    background-color: #f0f0f0;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 8px;
+    background-color: #e0e0e0;
+    border: 1px inset #c0c0c0;
+}
+
+.header .icon {
+    font-size: 16px;
+    margin-right: 8px;
+}
+
+.header h1 {
+    font-size: 14px;
+    font-weight: bold;
+    color: #000080;
+    flex-grow: 1;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-controls label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+}
+
+.btn {
+    padding: 4px 12px;
+    font-size: 11px;
+    border: 1px outset #c0c0c0;
+    background: #c0c0c0;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.btn:active {
+    border: 1px inset #c0c0c0;
+}
+
+.btn-primary {
+    background: #4a90e2;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-small {
+    padding: 2px 8px;
+    font-size: 10px;
+}
+
+.maintenance-form {
+    background-color: #f0f0f0;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    align-items: flex-end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.form-group.full-width {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.form-group.importance {
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+.form-group label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea {
+    padding: 2px 4px;
+    border: 1px inset #c0c0c0;
+    background-color: white;
+    font-family: inherit;
+    font-size: 11px;
+}
+
+.form-group input[type="text"]:read-only {
+    background-color: #f0f0f0;
+    color: #666;
+}
+
+.form-group select {
+    padding: 1px 2px;
+    height: 20px;
+}
+
+.form-group textarea {
+    resize: vertical;
+    font-family: "MS Gothic", monospace;
+    line-height: 1.3;
+}
+
+.radio-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: normal;
+    font-size: 11px;
+}
+
+.radio-group input[type="radio"] {
+    margin: 0;
+}
+
+/* 特定のフィールドの幅調整 */
+#article-number {
+    min-width: 150px;
+}
+
+#keyword {
+    flex: 1;
+}
+
+#info-category {
+    flex: 1;
+    min-width: 120px;
+}
+
+#publish-start,
+#publish-end {
+    min-width: 120px;
+}
+
+/* テキストエリアの高さ調整 */
+#question {
+    min-height: 120px;
+}
+
+#answer {
+    min-height: 180px;
+}
+
+#additional-comment {
+    min-height: 90px;
+}
+
+#notes {
+    min-height: 120px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    
+    .header-controls {
+        align-self: flex-end;
+    }
+}

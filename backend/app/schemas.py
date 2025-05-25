@@ -1,7 +1,7 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime, date
 from typing import List, Optional
-from models import StatusEnum, ChangeTypeEnum
+from app.models import StatusEnum, ChangeTypeEnum
 
 # User関連のスキーマ
 class UserBase(BaseModel):
@@ -11,6 +11,12 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
     is_admin: Optional[bool] = False
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    full_name: Optional[str] = None
+    password: Optional[str] = None
+    is_admin: Optional[bool] = None
 
 class User(UserBase):
     id: int
