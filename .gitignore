@@ -7,7 +7,7 @@ __pycache__/
 .pytest_cache/
 
 # DB関連
-_knowledge.db
+knowledge.db
 
 # 環境設定
 .env
