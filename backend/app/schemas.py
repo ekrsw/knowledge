@@ -12,6 +12,11 @@ class UserCreate(UserBase):
     password: str
     is_admin: Optional[bool] = False
 
+class UserRegister(UserBase):
+    """ユーザー登録用のスキーマ（管理者権限は含まない）"""
+    password: str
+    # is_adminフィールドは意図的に除外してセキュリティを確保
+
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     full_name: Optional[str] = None

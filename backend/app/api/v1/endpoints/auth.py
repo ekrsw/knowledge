@@ -16,7 +16,7 @@ from app.core.logging import get_request_logger
 from app.crud.user import user_crud
 from app.db.session import get_async_session
 from app.models import User
-from app.schemas import UserCreate, User as UserSchema, TokenResponse, RefreshTokenRequest
+from app.schemas import UserCreate, UserRegister, User as UserSchema, TokenResponse, RefreshTokenRequest
 
 router = APIRouter()
 
@@ -73,10 +73,10 @@ async def login_for_access_token(
 @router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
 async def register_user(
     request: Request,
-    user: UserCreate,
+    user: UserRegister,
     db: AsyncSession = Depends(get_async_session)
 ):
-    """新しいユーザーを作成"""
+    """新しいユーザーを作成（管理者権限なし）"""
     logger = get_request_logger(request)
     logger.info(f"ユーザー登録リクエスト: ユーザー名={user.username}")
     
@@ -90,7 +90,15 @@ async def register_user(
                 detail="ユーザー名が既に使用されています"
             )
         
-        db_user = await user_crud.create(db=db, obj_in=user)
+        # UserRegisterからUserCreateオブジェクトを作成（is_admin=Falseで固定）
+        user_create = UserCreate(
+            username=user.username,
+            full_name=user.full_name,
+            password=user.password,
+            is_admin=False  # 一般ユーザー登録では管理者権限を付与しない
+        )
+        
+        db_user = await user_crud.create(db=db, obj_in=user_create)
         logger.info(f"ユーザー登録成功: ユーザー名={db_user.username}")
         return db_user
         
